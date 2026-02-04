@@ -8,12 +8,15 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [showForgot, setShowForgot] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
   const handleLogin = async () => {
     setLoading(true)
     setMessage('')
+    setError('')
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -21,8 +24,12 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setMessage(error.message)
+      setError(error.message)
+      if (error.message.toLowerCase().includes('invalid')) {
+        setShowForgot(true)
+      }
     } else {
+      setShowForgot(false)
       router.push('/dashboard')
       router.refresh()
     }
@@ -33,6 +40,7 @@ export default function LoginPage() {
   const handleSignup = async () => {
     setLoading(true)
     setMessage('')
+    setError('')
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -75,6 +83,30 @@ export default function LoginPage() {
           Login
         </button>
 
+        {showForgot === true && (
+          <button
+            onClick={async () => {
+              if (!email.trim()) {
+                alert('Enter your email first.')
+                return
+              }
+
+              const { error } =
+                await supabase.auth.resetPasswordForEmail(email)
+              if (error) {
+                alert(error.message)
+                return
+              }
+
+              alert('Password reset email sent. Check your inbox (and spam).')
+            }}
+            className="text-sm underline"
+            type="button"
+          >
+            Forgot password?
+          </button>
+        )}
+
         <button
           onClick={handleSignup}
           disabled={loading}
@@ -83,6 +115,7 @@ export default function LoginPage() {
           Sign Up
         </button>
 
+        {error && <p className="text-sm text-red-600">{error}</p>}
         {message && <p className="text-sm">{message}</p>}
       </div>
     </div>

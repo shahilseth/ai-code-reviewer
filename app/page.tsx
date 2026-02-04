@@ -1,13 +1,28 @@
-import { redirect } from 'next/navigation'
+'use client'
+
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 
-export default async function Home() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export default function Home() {
+  const router = useRouter()
+  const [checking, setChecking] = useState(true)
 
-  if (user) {
-    redirect('/dashboard')
+  useEffect(() => {
+    const run = async () => {
+      const { data } = await supabase.auth.getUser()
+      if (data.user) {
+        router.push('/dashboard')
+        return
+      }
+      setChecking(false)
+    }
+    run()
+  }, [router])
+
+  if (checking) {
+    return <div className="min-h-screen p-6">Loading...</div>
   }
 
   return (
